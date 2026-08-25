@@ -1,0 +1,11 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      # Lint with autofix; must run before the formatter since fixes may need reformatting.
+      # Notebooks are exploratory and are not checked by this hook.
+      - id: ruff-check
+        args: [--fix]
+        exclude: \.ipynb$
+      - id: ruff-format
+        exclude: \.ipynb$
