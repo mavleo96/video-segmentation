@@ -19,10 +19,9 @@ tmux new -s dl
 conda activate video
 cd video-segmentation
 bash scripts/download_cityscapes.sh --splits train,val --workers 32
+bash scripts/download_kittistep.sh
 
-# ruff commands
-ruff check --fix .
-ruff format .
+# ruff through pre-commit hooks
 pre-commit run --all-files
 
 ```

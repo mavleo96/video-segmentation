@@ -7,8 +7,9 @@ set -euo pipefail
 ENV_NAME="video"
 DATA_ROOT="/data/video-segmentation"
 CITYSCAPES_ROOT="${DATA_ROOT}/cityscapes"
+KITTISTEP_ROOT="${DATA_ROOT}/kittistep"
 
-export DATA_ROOT CITYSCAPES_ROOT
+export DATA_ROOT CITYSCAPES_ROOT KITTISTEP_ROOT
 
 # Initialize Conda in the current shell
 eval "$(conda shell.bash hook)"
@@ -16,6 +17,7 @@ eval "$(conda shell.bash hook)"
 # Create and activate environment
 conda create -n "$ENV_NAME" python=3.12 -y
 conda activate "$ENV_NAME"
+conda install -y -c conda-forge aria2
 
 # Install dependencies
 python -m pip install --upgrade \
@@ -45,6 +47,7 @@ mkdir -p "$ACTIVATE_DIR"
 cat > "${ACTIVATE_DIR}/video-segmentation.sh" <<EOF
 export DATA_ROOT="${DATA_ROOT}"
 export CITYSCAPES_ROOT="${CITYSCAPES_ROOT}"
+export KITTISTEP_ROOT="${KITTISTEP_ROOT}"
 EOF
 
 # Export environment configuration
