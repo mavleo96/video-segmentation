@@ -23,6 +23,9 @@ def bn_to_gn(module: nn.Module, num_groups: int = 32) -> nn.Module:
 
 
 class DINOv3ForSemanticSegmentation(PreTrainedModel):
+    config_class = DINOv3ForSemanticSegmentationConfig
+    main_input_name = "pixel_values"
+
     def __init__(self, config: DINOv3ForSemanticSegmentationConfig) -> None:
         super().__init__(config)
         if len(config.dinov3_config.out_indices) != 4:

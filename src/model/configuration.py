@@ -28,7 +28,7 @@ class DINOv3ForSemanticSegmentationConfig(PreTrainedConfig):
     # auxiliary head
     use_auxiliary_head: bool = True
     auxiliary_loss_weight: float = 0.4
-    auxiliary_in_channels: int | None = None
+    # auxiliary_in_channels: int | None = None
     auxiliary_channels: int = 256
     auxiliary_num_convs: int = 1
     auxiliary_concat_input: bool = False
