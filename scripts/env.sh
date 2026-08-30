@@ -27,6 +27,8 @@ python -m pip install --upgrade \
  transformers \
  accelerate \
  datasets \
+ torchmetrics \
+ opencv-python \
  ipykernel \
  wandb \
  ruff \
