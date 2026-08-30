@@ -15,7 +15,7 @@ class WarpedTC(Metric):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(self, num_classes: int = 19, fb_thresh: float = 1.0, **kwargs):
+    def __init__(self, num_classes: int, fb_thresh: float = 1.0, **kwargs):
         super().__init__(**kwargs)
         self.num_classes = num_classes
         self.fb_thresh = fb_thresh
