@@ -31,7 +31,10 @@ class SegIoU(Metric):
 
         # Note: pad with 0 so the image border counts as an edge
         padded = F.pad(mask, pad=(d,) * 4, value=0.0)
-        eroded = 1 - F.max_pool2d(1 - padded, kernel_size=2 * d + 1, stride=1)
+
+        # Note: erosion with a square window is separable, so pool rows then columns
+        k = 2 * d + 1
+        eroded = 1 - F.max_pool2d(F.max_pool2d(1 - padded, kernel_size=(1, k), stride=1), kernel_size=(k, 1), stride=1)
         boundary = mask.bool() & ~eroded.bool()
         return boundary
 
