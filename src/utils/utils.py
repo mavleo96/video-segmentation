@@ -2,14 +2,24 @@ import torch
 import torch.nn.functional as F
 
 
-def one_hot_with_ignore(x: torch.Tensor, num_classes: int, ignore_label: int) -> torch.Tensor:
-    """A thin wrapper around F.one_hot that ignores the ignore_label."""
-    mask = x == ignore_label
+def warp(x: torch.Tensor, flow: torch.Tensor, mode: str = "bilinear") -> tuple[torch.Tensor, torch.Tensor]:
+    """Sample x at p + flow(p) for each pixel p. x: (B, C, H, W), flow: (B, 2, H, W) in pixels.
 
-    safe_x = x.clone()
-    safe_x[mask] = 0
+    Returns the warped x and the sampling positions (B, 2, H, W). Differentiable in x and flow (grid_sample), so it
+    also serves a warped consistency loss; out-of-bounds samples are 0, so mask them with the positions.
+    """
+    assert x.ndim == 4 and flow.ndim == 4
+    assert x.shape[0] == flow.shape[0] and x.shape[2:] == flow.shape[2:]
+    assert flow.shape[1] == 2
 
-    oh = F.one_hot(safe_x, num_classes)
-    oh[mask] = 0
+    _, _, H, W = flow.shape
 
-    return oh
+    # create a meshgrid and add flow to it
+    ys, xs = torch.meshgrid(torch.arange(H, device=flow.device), torch.arange(W, device=flow.device), indexing="ij")
+    pos = torch.stack((xs, ys)).float() + flow
+
+    # normalize the grid and sample x at calculated positions
+    grid = torch.stack((2 * pos[:, 0] / (W - 1) - 1, 2 * pos[:, 1] / (H - 1) - 1), dim=-1)
+    out = F.grid_sample(x, grid, mode=mode, padding_mode="zeros", align_corners=True)
+
+    return out, pos
