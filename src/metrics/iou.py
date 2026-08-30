@@ -19,7 +19,9 @@ class SegIoU(Metric):
         # Reference: https://arxiv.org/abs/2103.16562
         self.boundary_ratio = 0.02
 
-        self.add_state("conf", torch.zeros(num_classes, num_classes, dtype=torch.long), dist_reduce_fx="sum")
+        self.add_state(
+            "confusion_matrix", torch.zeros(num_classes, num_classes, dtype=torch.long), dist_reduce_fx="sum"
+        )
         self.add_state("b_inter", torch.zeros(num_classes, dtype=torch.long), dist_reduce_fx="sum")
         self.add_state("b_union", torch.zeros(num_classes, dtype=torch.long), dist_reduce_fx="sum")
 
@@ -34,9 +36,12 @@ class SegIoU(Metric):
         return boundary
 
     def update(self, pred: torch.Tensor, target: torch.Tensor) -> None:
+        assert pred.ndim == target.ndim == 3
+        assert pred.shape == target.shape
+
         _, H, W = target.shape
 
-        self.conf += confusion_matrix(
+        self.confusion_matrix += confusion_matrix(
             pred, target, task="multiclass", num_classes=self.num_classes, ignore_index=self.ignore_index
         )
 
@@ -50,7 +55,7 @@ class SegIoU(Metric):
         self.b_union += ((pred_boundary | target_boundary) & valid).sum((0, 2, 3))
 
     def compute(self) -> dict[str, torch.Tensor]:
-        conf = self.conf.float()
+        conf = self.confusion_matrix.float()
         tp = conf.diag()
         iou = tp / (conf.sum(0) + conf.sum(1) - tp)  # 0/0 -> nan for absent classes
         biou = self.b_inter.float() / self.b_union.float()
