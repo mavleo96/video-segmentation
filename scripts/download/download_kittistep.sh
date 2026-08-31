@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage:  bash scripts/download_kittistep.sh   (safe to rerun)
+# Usage:  bash scripts/download/download_kittistep.sh   (safe to rerun)
 set -euo pipefail
 if [[ -z "${KITTISTEP_ROOT:-}" ]]; then eval "$(conda shell.bash hook)"; conda activate video; fi
 : "${KITTISTEP_ROOT:?conda activate video}"

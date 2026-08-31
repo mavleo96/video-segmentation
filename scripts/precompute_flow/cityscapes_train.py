@@ -1,8 +1,8 @@
 """Precompute RAFT flow between each train snippet's labeled frame and its neighbors, for the consistency loss.
 
-  python -m scripts.precompute_flow_train                  # labeled frame <-> ±1..±5, all 2975 snippets
-  python -m scripts.precompute_flow_train --max-offset 3
-  python -m scripts.precompute_flow_train --coverage       # ~100 snippets, offsets ±1..±10, report only, no saving
+  python -m scripts.precompute_flow.cityscapes_train             # labeled frame <-> ±1..±5, all 2975 snippets
+  python -m scripts.precompute_flow.cityscapes_train --max-offset 3
+  python -m scripts.precompute_flow.cityscapes_train --coverage  # 100 snippets, offsets ±1..±10, report only
 
 One uncompressed .npz per snippet at $CITYSCAPES_ROOT/flow/train/<city>/<city>_<seq>_<frame>_flow.npz, named after
 the labeled frame L. Keys, for o in -k..-1, 1..k, each (2, 256, 512) fp16 at 1/4 res:

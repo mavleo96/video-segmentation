@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage:  bash scripts/download_cityscapes.sh [--splits val] [--workers 32]
+# Usage:  bash scripts/download/download_cityscapes.sh [--splits val] [--workers 32]
 set -euo pipefail
 if [[ -z "${CITYSCAPES_ROOT:-}" ]]; then eval "$(conda shell.bash hook)"; conda activate video; fi
 : "${CITYSCAPES_ROOT:?conda activate video}"

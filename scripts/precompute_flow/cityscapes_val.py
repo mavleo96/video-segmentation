@@ -1,6 +1,6 @@
 """Precompute RAFT flow between consecutive frames of each val snippet, for the WarpedTC metric.
 
-  python -m scripts.precompute_flow_val
+  python -m scripts.precompute_flow.cityscapes_val
 
 One uncompressed .npz per snippet at $CITYSCAPES_ROOT/flow/val/<city>/<city>_<seq>_<frame>_flow.npz, named after the
 labeled frame. Keys, for t = 0..28 (positions in the snippet's frames), each (2, 512, 1024) fp16 at 1/2 res:
