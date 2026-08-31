@@ -23,3 +23,20 @@ def warp(x: torch.Tensor, flow: torch.Tensor, mode: str = "bilinear") -> tuple[t
     out = F.grid_sample(x, grid, mode=mode, padding_mode="zeros", align_corners=True)
 
     return out, pos
+
+
+def fb_consistency_mask(flow_ab: torch.Tensor, flow_ba: torch.Tensor, threshold: float = 1.0) -> torch.Tensor:
+    """(B, H, W) True where flow_ab lands in-bounds and passes the forward-backward check.
+
+    flow_ab: a -> b on a's grid, flow_ba: b -> a on b's grid, both (B, 2, H, W) in pixels. Following flow_ab and then
+    flow_ba should return within `threshold` px of the start; pixels that don't are occluded or have unreliable flow.
+    """
+    assert flow_ab.shape == flow_ba.shape and flow_ab.ndim == 4
+
+    _, _, H, W = flow_ab.shape
+
+    flow_ba_at, pos = warp(flow_ba, flow_ab)
+    consistent = (flow_ab + flow_ba_at).norm(dim=1) < threshold
+    in_bounds = (pos[:, 0] >= 0) & (pos[:, 0] <= W - 1) & (pos[:, 1] >= 0) & (pos[:, 1] <= H - 1)
+
+    return consistent & in_bounds

@@ -5,7 +5,7 @@ from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.functional import confusion_matrix
 
-from src.utils import warp
+from src.flow import fb_consistency_mask, warp
 
 
 class WarpedTC(Metric):
@@ -30,18 +30,12 @@ class WarpedTC(Metric):
 
     def update(self, pred_t: Tensor, pred_prev: Tensor, flow_bw: Tensor, flow_fw: Tensor) -> None:
         """pred_t, pred_prev: (B, H, W) class ids. flow_bw: t -> t-1, flow_fw: t-1 -> t, (B, 2, H, W) in pixels."""
-        _, H, W = pred_t.shape
-
         # warp the previous prediction using the backward flow
-        warped, pos = warp(pred_prev.unsqueeze(1).float(), flow_bw, "nearest")
+        warped, _ = warp(pred_prev.unsqueeze(1).float(), flow_bw, "nearest")
         warped = warped.squeeze(1).long()
 
-        # Note: following flow_bw and then flow_fw should return within fb_thresh px of the start; pixels that
-        # don't are occluded or have unreliable flow. pos is shared with the warp above (same flow_bw).
-        fw_at, _ = warp(flow_fw, flow_bw, "bilinear")
-        consistent = (flow_bw + fw_at).norm(dim=1) < self.fb_thresh
-        in_bounds = (pos[:, 0] >= 0) & (pos[:, 0] <= W - 1) & (pos[:, 1] >= 0) & (pos[:, 1] <= H - 1)
-        valid = consistent & in_bounds
+        # keep pixels whose backward flow lands in-bounds and passes the forward-backward check
+        valid = fb_consistency_mask(flow_bw, flow_fw, self.fb_thresh)
 
         self.confusion_matrix += confusion_matrix(
             warped[valid],
@@ -68,9 +62,13 @@ class WarpedTC(Metric):
 class VEC(Metric):
     """Video Effective Consistency (DTERN, ICCV 2025), sliding window, accumulated over the dataset.
 
-    Over each window of `window` consecutive frames, a pixel is stable in the ground truth (or prediction) if
-    its class never changes; per class, VEC is the IoU between the stable-and-correct pixels. Needs labels on
-    every frame, so it applies to KITTI-STEP, not Cityscapes (one labeled frame per snippet).
+    Over each window of `window` consecutive frames (VEC_8 / VEC_16 in the paper), per class k, VEC is the IoU
+    between the pixels that are k in the ground truth on all frames and the pixels that are k in the prediction
+    on all frames (Eq. 17); the result is the mean over classes. Needs labels on every frame, so it applies to
+    KITTI-STEP, not Cityscapes (one labeled frame per snippet).
+
+    Two choices the paper leaves open: pixels whose ground truth is ignore on any frame of the window are
+    excluded, and counts are summed over all windows before the IoU (as for mIoU) rather than averaged per window.
 
     Call update(pred, target) once per frame, in order, and new_sequence() before each new sequence. Use
     update(), not metric(...): the window lives outside the metric state, and Metric.forward resets state
